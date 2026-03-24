@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Faculty Dashboard — ASDS{% endblock %}
+
+{% block content %}
+<h1>Faculty Dashboard</h1>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <span class="stat-number">{{ total }}</span>
+        <span class="stat-label">Total Classes</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ open_count }}</span>
+        <span class="stat-label">Open</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ closed_count }}</span>
+        <span class="stat-label">Closed</span>
+    </div>
+</div>
+
+<div class="section-header">
+    <h2>Your Classes</h2>
+    <a href="{{ url_for('faculty.create_class') }}" class="btn btn-sm">+ Create Class</a>
+</div>
+
+{% if classes %}
+{% for cls in classes %}
+<div class="class-card {{ 'is-open' if cls.is_open else 'is-closed' }}">
+    <div class="class-card-header">
+        <h3>{{ cls.name }}</h3>
+        <span class="badge {{ 'badge-open' if cls.is_open else 'badge-closed' }}">
+            {{ 'Open' if cls.is_open else 'Closed' }}
+        </span>
+    </div>
+    <div class="class-card-info">
+        <span>Code: <strong>{{ cls.code }}</strong></span>
+        <span>Students: <strong>{{ cls.students | length }}</strong></span>
+        <span>Submissions: <strong>{{ cls.submissions | length }}</strong></span>
+    </div>
+    <div class="class-card-actions">
+        <a href="{{ url_for('faculty.class_detail', code=cls.code) }}" class="btn btn-sm">View</a>
+        {% if not cls.is_open %}
+        <form method="POST" action="{{ url_for('faculty.delete_class', code=cls.code) }}" style="display:inline;"
+            onsubmit="return confirm('Delete this class? This cannot be undone.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<p class="empty-msg">No classes yet. Create one to get started!</p>
+{% endif %}
+{% endblock %}

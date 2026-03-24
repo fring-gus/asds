@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel — ASDS{% endblock %}
+
+{% block content %}
+<div class="section-header">
+    <h1>Admin Panel</h1>
+    <div style="display:flex; gap:0.5rem;">
+        <a href="{{ url_for('admin.change_password') }}" class="btn btn-sm btn-warn">Change Password</a>
+        <a href="{{ url_for('admin.add_user') }}" class="btn btn-sm btn-primary">+ Add User</a>
+    </div>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <span class="stat-number">{{ faculty_count }}</span>
+        <span class="stat-label">Faculty</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ student_count }}</span>
+        <span class="stat-label">Students</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ faculty_count + student_count }}</span>
+        <span class="stat-label">Total Users</span>
+    </div>
+</div>
+
+{# ── Faculty Section ── #}
+<div class="section-header" style="margin-top:2rem;">
+    <h2>Faculty <span class="role-badge role-faculty">{{ faculty_count }}</span></h2>
+</div>
+
+{% set faculty_users = users | selectattr('role', 'equalto', 'faculty') | list %}
+{% if faculty_users %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Joined</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in faculty_users %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ user.username }}</strong></td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.created_at.strftime('%d %b %Y') }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('admin.reset_password', user_id=user.id) }}" style="display:inline;"
+                    onsubmit="return confirm('Reset password for {{ user.username }}? The system will generate a new temporary password.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-sm btn-warning">Reset Pwd</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display:inline;"
+                    onsubmit="return confirm('Delete faculty {{ user.username }}? All their classes and student data will be removed.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-msg">No faculty registered yet.</p>
+{% endif %}
+
+{# ── Students Section ── #}
+<div class="section-header" style="margin-top:2.5rem;">
+    <h2>Students <span class="role-badge role-student">{{ student_count }}</span></h2>
+</div>
+
+{% set student_users = users | selectattr('role', 'equalto', 'student') | list %}
+{% if student_users %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Joined</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in student_users %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ user.username }}</strong></td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.created_at.strftime('%d %b %Y') }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('admin.reset_password', user_id=user.id) }}" style="display:inline;"
+                    onsubmit="return confirm('Reset password for {{ user.username }}? The system will generate a new temporary password.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-sm btn-warning">Reset Pwd</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display:inline;"
+                    onsubmit="return confirm('Delete student {{ user.username }}? All their submissions will be removed.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-msg">No students registered yet.</p>
+{% endif %}
+{% endblock %}

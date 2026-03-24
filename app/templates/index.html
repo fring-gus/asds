@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASDS — Automated Similarity Detection System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── Admin corner link ── */
+        .admin-corner {
+            position: fixed;
+            top: 1.2rem;
+            right: 1.5rem;
+            z-index: 10;
+        }
+
+        .admin-corner a {
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 0.7rem;
+            text-decoration: none;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: color 0.3s;
+        }
+
+        .admin-corner a:hover {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* ── Main layout ── */
+        .landing {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6rem;
+            width: 100%;
+            max-width: 1100px;
+            padding: 2rem;
+        }
+
+        /* ── Left: Text ── */
+        .left {
+            flex: 1;
+            z-index: 2;
+        }
+
+        .title {
+            font-size: 6rem;
+            font-weight: 900;
+            letter-spacing: -3px;
+            line-height: 1;
+            background: linear-gradient(135deg, #fff 0%, #8b5cf6 50%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* ── Buttons ── */
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2.5rem;
+        }
+
+        .btn-round {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 130px;
+            height: 46px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.25s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-login {
+            background: #8b5cf6;
+            color: #fff;
+        }
+
+        .btn-login:hover {
+            background: #7c3aed;
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-register {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-register:hover {
+            border-color: #8b5cf6;
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        /* ── Right: Wormhole ── */
+        .right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .wormhole {
+            position: relative;
+            width: 320px;
+            height: 320px;
+        }
+
+        .wormhole .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1.5px solid rgba(139, 92, 246, 0.15);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        .wormhole .ring:nth-child(1) {
+            width: 60px;
+            height: 60px;
+            animation-delay: 0s;
+            border-color: rgba(139, 92, 246, 0.6);
+        }
+
+        .wormhole .ring:nth-child(2) {
+            width: 95px;
+            height: 95px;
+            animation-delay: 0.25s;
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+
+        .wormhole .ring:nth-child(3) {
+            width: 130px;
+            height: 130px;
+            animation-delay: 0.5s;
+            border-color: rgba(139, 92, 246, 0.4);
+        }
+
+        .wormhole .ring:nth-child(4) {
+            width: 165px;
+            height: 165px;
+            animation-delay: 0.75s;
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        .wormhole .ring:nth-child(5) {
+            width: 200px;
+            height: 200px;
+            animation-delay: 1s;
+            border-color: rgba(139, 92, 246, 0.25);
+        }
+
+        .wormhole .ring:nth-child(6) {
+            width: 235px;
+            height: 235px;
+            animation-delay: 1.25s;
+            border-color: rgba(139, 92, 246, 0.2);
+        }
+
+        .wormhole .ring:nth-child(7) {
+            width: 270px;
+            height: 270px;
+            animation-delay: 1.5s;
+            border-color: rgba(139, 92, 246, 0.15);
+        }
+
+        .wormhole .ring:nth-child(8) {
+            width: 305px;
+            height: 305px;
+            animation-delay: 1.75s;
+            border-color: rgba(139, 92, 246, 0.1);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.08);
+                opacity: 0.5;
+            }
+        }
+
+        /* Rotating glow */
+        .wormhole::before {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: glow-rotate 8s linear infinite;
+        }
+
+        @keyframes glow-rotate {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg) scale(1);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) rotate(180deg) scale(1.3);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg) scale(1);
+            }
+        }
+
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            animation: float-in 3s linear infinite;
+        }
+
+        .particle:nth-child(9) {
+            top: 10%;
+            left: 20%;
+            animation-delay: 0s;
+            animation-duration: 3s;
+        }
+
+        .particle:nth-child(10) {
+            top: 80%;
+            left: 70%;
+            animation-delay: 0.5s;
+            animation-duration: 2.5s;
+        }
+
+        .particle:nth-child(11) {
+            top: 30%;
+            left: 80%;
+            animation-delay: 1s;
+            animation-duration: 3.5s;
+        }
+
+        .particle:nth-child(12) {
+            top: 70%;
+            left: 15%;
+            animation-delay: 1.5s;
+            animation-duration: 2.8s;
+        }
+
+        .particle:nth-child(13) {
+            top: 50%;
+            left: 90%;
+            animation-delay: 2s;
+            animation-duration: 4s;
+        }
+
+        .particle:nth-child(14) {
+            top: 15%;
+            left: 65%;
+            animation-delay: 0.3s;
+            animation-duration: 3.2s;
+        }
+
+        .particle:nth-child(15) {
+            top: 85%;
+            left: 40%;
+            animation-delay: 0.8s;
+            animation-duration: 2.6s;
+        }
+
+        .particle:nth-child(16) {
+            top: 45%;
+            left: 10%;
+            animation-delay: 1.2s;
+            animation-duration: 3.8s;
+        }
+
+        @keyframes float-in {
+            0% {
+                opacity: 0;
+                transform: scale(0) translate(0, 0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.5);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0) translate(0, 0);
+            }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .landing {
+                flex-direction: column;
+                gap: 2rem;
+                text-align: center;
+            }
+
+            .title {
+                font-size: 4rem;
+            }
+
+            .btn-group {
+                justify-content: center;
+            }
+
+            .wormhole {
+                width: 220px;
+                height: 220px;
+            }
+
+            .wormhole .ring:nth-child(1) {
+                width: 40px;
+                height: 40px;
+            }
+
+            .wormhole .ring:nth-child(2) {
+                width: 65px;
+                height: 65px;
+            }
+
+            .wormhole .ring:nth-child(3) {
+                width: 90px;
+                height: 90px;
+            }
+
+            .wormhole .ring:nth-child(4) {
+                width: 115px;
+                height: 115px;
+            }
+
+            .wormhole .ring:nth-child(5) {
+                width: 140px;
+                height: 140px;
+            }
+
+            .wormhole .ring:nth-child(6) {
+                width: 165px;
+                height: 165px;
+            }
+
+            .wormhole .ring:nth-child(7) {
+                width: 190px;
+                height: 190px;
+            }
+
+            .wormhole .ring:nth-child(8) {
+                width: 215px;
+                height: 215px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Admin corner -->
+    <div class="admin-corner">
+        <a href="{{ url_for('admin.login') }}">Admin</a>
+    </div>
+
+    <div class="landing">
+        <!-- Left: Title + Buttons -->
+        <div class="left">
+            <h1 class="title">ASDS</h1>
+            <p class="subtitle">Automated Similarity Detection System</p>
+            <div class="btn-group">
+                <a href="{{ url_for('auth.login') }}" class="btn-round btn-login">Login</a>
+                <a href="{{ url_for('auth.register') }}" class="btn-round btn-register">Register</a>
+            </div>
+        </div>
+
+        <!-- Right: Wormhole -->
+        <div class="right">
+            <div class="wormhole">
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <span class="particle"></span>
+                <span class="particle"></span>
+                <span class="particle"></span>
+                <span class="particle"></span>
+                <span class="particle"></span>
+                <span class="particle"></span>
+                <span class="particle"></span>
+                <span class="particle"></span>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

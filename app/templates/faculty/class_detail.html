@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}{{ cls.name }} — ASDS{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('faculty.dashboard') }}" class="back-link">← Back to Dashboard</a>
+
+<div class="class-header">
+    <h1>{{ cls.name }}</h1>
+    <span class="badge {{ 'badge-open' if cls.is_open else 'badge-closed' }}">
+        {{ 'Open' if cls.is_open else 'Closed' }}
+    </span>
+</div>
+
+<div class="class-meta">
+    <span>Code: <strong>{{ cls.code }}</strong></span>
+    <span>Students: <strong>{{ student_count }}</strong></span>
+    <span>Submissions: <strong>{{ submissions | length }}</strong></span>
+</div>
+
+{% set submitted_ids = submissions | map(attribute='student_id') | list %}
+
+<details class="students-panel" open>
+    <summary>
+        <span>👥 Enrolled Students</span>
+        <span class="badge badge-open" style="margin-left:0.5rem;">{{ cls.students | length }}</span>
+    </summary>
+    {% if cls.students %}
+    <table class="data-table" style="margin-top:0.75rem;">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Submitted</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in cls.students | sort(attribute='name') %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ s.name }}</td>
+                <td>{{ s.username }}</td>
+                <td>
+                    {% if s.id in submitted_ids %}
+                        <span class="status status-accepted">✔ Yes</span>
+                    {% else %}
+                        <span class="status status-pending">✗ No</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-msg" style="padding:0.5rem 0;">No students have joined yet.</p>
+    {% endif %}
+</details>
+
+<h2>Submitted Abstracts</h2>
+
+{% if submissions %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Project Title</th>
+            <th>Submitted</th>
+            <th>Status</th>
+            <th>File</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sub in submissions %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ sub.student.name }}</td>
+            <td>{{ sub.project_title }}</td>
+            <td>{{ sub.uploaded_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+            <td>
+                <span class="status status-{{ sub.status }}">{{ sub.status | capitalize }}</span>
+            </td>
+            <td>
+                {% if sub.file_path %}
+                <a href="{{ url_for('faculty.download_file', submission_id=sub.id) }}" class="btn btn-sm btn-primary"
+                    style="padding:0.2rem 0.6rem; font-size:0.8rem;">Download</a>
+                {% else %}
+                —
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-msg">No submissions yet.</p>
+{% endif %}
+
+<div class="action-bar" style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center;">
+    {% if cls.is_open %}
+    <form method="POST" action="{{ url_for('faculty.close_uploads', code=cls.code) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit" class="btn"
+            style="background:#e67e22; color:#fff; min-width:180px; padding:0.6rem 1.2rem;">🔒 Close Uploads</button>
+    </form>
+    {% else %}
+    <form method="POST" action="{{ url_for('faculty.reopen_uploads', code=cls.code) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit" class="btn"
+            style="background:#3498db; color:#fff; min-width:180px; padding:0.6rem 1.2rem;">🔓 Reopen Uploads</button>
+    </form>
+    {% endif %}
+
+    {% if submissions | length >= 2 and not cls.is_open %}
+    <form method="POST" action="{{ url_for('faculty.run_comparison', code=cls.code) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit" class="btn"
+            style="background:#4f6ef7; color:#fff; min-width:180px; padding:0.6rem 1.2rem;">▶ Run Comparison</button>
+    </form>
+    {% endif %}
+
+    {% if cls.results | length > 0 %}
+    <form method="POST" action="{{ url_for('faculty.export_excel', code=cls.code) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit" class="btn"
+            style="background:#27ae60; color:#fff; min-width:180px; padding:0.6rem 1.2rem;">📥 Export Excel</button>
+    </form>
+    {% endif %}
+</div>
+
+{% set flagged = cls.results | selectattr('is_similar') | list %}
+{% set all_results = cls.results | sort(attribute='similarity_score', reverse=true) %}
+
+{% if cls.results | length > 0 %}
+<h2>Similarity Report</h2>
+
+<div class="report-summary">
+    <div class="stat-card">
+        <span class="stat-number">{{ cls.results | length }}</span>
+        <span class="stat-label">Total Pairs</span>
+    </div>
+    <div class="stat-card" style="border-left: 3px solid #e74c3c;">
+        <span class="stat-number" style="color:#e74c3c;">{{ flagged | length }}</span>
+        <span class="stat-label">Flagged (≥70%)</span>
+    </div>
+    <div class="stat-card" style="border-left: 3px solid #27ae60;">
+        <span class="stat-number" style="color:#27ae60;">{{ cls.results | length - flagged | length }}</span>
+        <span class="stat-label">Safe</span>
+    </div>
+</div>
+
+{% if flagged | length > 0 %}
+<h3>🚩 Flagged Pairs</h3>
+{% for result in flagged | sort(attribute='similarity_score', reverse=true) %}
+<div class="result-card result-flagged">
+    <div class="result-pair">
+        <div class="result-sub">
+            <strong>{{ result.submission_1.project_title }}</strong>
+            <span class="result-student">{{ result.submission_1.student.name }}</span>
+            <span class="status status-{{ result.submission_1.status }}">{{ result.submission_1.status | capitalize
+                }}</span>
+        </div>
+        <span class="result-vs">↔</span>
+        <div class="result-sub">
+            <strong>{{ result.submission_2.project_title }}</strong>
+            <span class="result-student">{{ result.submission_2.student.name }}</span>
+            <span class="status status-{{ result.submission_2.status }}">{{ result.submission_2.status | capitalize
+                }}</span>
+        </div>
+    </div>
+    <span class="similarity-score">{{ (result.similarity_score * 100) | round(1) }}%</span>
+</div>
+{% endfor %}
+{% endif %}
+
+{% set safe = all_results | rejectattr('is_similar') | list %}
+{% if safe | length > 0 %}
+<h3 style="margin-top:1.5rem;">✅ Safe Pairs (Top 10)</h3>
+{% for result in safe[:10] %}
+<div class="result-card">
+    <div class="result-pair">
+        <div class="result-sub">
+            <strong>{{ result.submission_1.project_title }}</strong>
+            <span class="result-student">{{ result.submission_1.student.name }}</span>
+        </div>
+        <span class="result-vs">↔</span>
+        <div class="result-sub">
+            <strong>{{ result.submission_2.project_title }}</strong>
+            <span class="result-student">{{ result.submission_2.student.name }}</span>
+        </div>
+    </div>
+    <span class="similarity-score" style="color:#27ae60;">{{ (result.similarity_score * 100) | round(1) }}%</span>
+</div>
+{% endfor %}
+{% if safe | length > 10 %}
+<p class="empty-msg" style="padding:0.5rem;">...and {{ safe | length - 10 }} more safe pairs.</p>
+{% endif %}
+{% endif %}
+
+{% endif %}
+{% endblock %}

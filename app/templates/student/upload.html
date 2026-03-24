@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Upload Abstract — ASDS{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('student.dashboard') }}" class="back-link">← Back to Dashboard</a>
+
+<div class="auth-container">
+    <h2>Upload Abstract</h2>
+    <p style="text-align:center; color:#777; margin-bottom:1rem;">{{ cls.name }}</p>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="form-group">
+            <label for="title">Project Title</label>
+            <input type="text" id="title" name="title" placeholder="e.g. AI-based Chatbot System" required>
+        </div>
+        <div class="form-group">
+            <label>Abstract Document</label>
+            <div class="file-upload-zone" onclick="document.getElementById('file').click()">
+                <div style="font-size:2rem; margin-bottom:0.5rem; color:var(--primary);">📄</div>
+                <input type="file" id="file" name="file" accept=".pdf,.docx" required style="display:none;" onchange="document.getElementById('file-label').textContent = this.files[0] ? this.files[0].name : 'Click to browse or drag and drop'">
+                <p id="file-label" style="font-weight:600; color:var(--text-main);">Click to browse or drag and drop</p>
+                <p class="file-hint">Accepted formats: .pdf, .docx (Max 10MB)</p>
+            </div>
+        </div>
+        <button type="submit" class="btn">Submit Abstract</button>
+    </form>
+</div>
+{% endblock %}

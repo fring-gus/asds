@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard — ASDS{% endblock %}
+
+{% block content %}
+<h1>Student Dashboard</h1>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <span class="stat-number">{{ total_classes }}</span>
+        <span class="stat-label">Joined Classes</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ total_submissions }}</span>
+        <span class="stat-label">Submitted</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ results_ready }}</span>
+        <span class="stat-label">Results Ready</span>
+    </div>
+</div>
+
+<div class="join-class-bar">
+    <h2>Join a Class</h2>
+    <form method="POST" action="{{ url_for('student.join_class') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="text" name="code" placeholder="Enter class code" required>
+        <button type="submit" class="btn btn-sm">Join</button>
+    </form>
+</div>
+
+<h2>Your Classes</h2>
+
+{% if class_data %}
+{% for item in class_data %}
+<div class="class-card {{ 'is-open' if item.class.is_open else 'is-closed' }}">
+    <div class="class-card-header">
+        <h3>{{ item.class.name }}</h3>
+        <span class="badge {{ 'badge-open' if item.class.is_open else 'badge-closed' }}">
+            {{ 'Open' if item.class.is_open else 'Closed' }}
+        </span>
+    </div>
+    <div class="class-card-info">
+        <span>Faculty: <strong>{{ item.class.faculty.name }}</strong></span>
+    </div>
+
+    {% if item.submission %}
+    <div class="submission-info">
+        <span>Your Project: <strong>{{ item.submission.project_title }}</strong></span>
+        <span class="status status-{{ item.submission.status }}">
+            {{ item.submission.status | capitalize }}
+        </span>
+    </div>
+    {% if item.submission.status == 'rejected' %}
+    <p style="color:#e74c3c; font-size:0.85rem; margin:0.3rem 0 0;">
+        Your abstract was flagged as similar to an existing submission.
+    </p>
+    {% endif %}
+    {% if item.class.is_open %}
+    <div class="class-card-actions" style="margin-top:0.5rem;">
+        <a href="{{ url_for('student.upload_abstract', code=item.class.code) }}" class="btn btn-sm btn-warn">🔄
+            Re-upload Abstract</a>
+    </div>
+    {% endif %}
+    {% else %}
+    {% if item.class.is_open %}
+    <div class="class-card-actions">
+        <a href="{{ url_for('student.upload_abstract', code=item.class.code) }}" class="btn btn-sm btn-primary">Upload
+            Abstract</a>
+    </div>
+    {% else %}
+    <p class="empty-msg" style="padding: 0.5rem 0;">Uploads closed — no submission made.</p>
+    {% endif %}
+    {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<p class="empty-msg">No classes joined yet. Enter a class code above to get started!</p>
+{% endif %}
+{% endblock %}
