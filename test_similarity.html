@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Similarity Engine Test Tool</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+            color: #fff;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+        }
+
+        header small {
+            opacity: 0.6;
+            font-size: 0.8rem;
+            display: block;
+            margin-top: 0.2rem;
+        }
+
+        .badge {
+            background: #e94560;
+            color: #fff;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2.5px dashed #4f6ef7;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            background: #eef1ff;
+            border-color: #e94560;
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-zone .icon {
+            font-size: 3rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .upload-zone p {
+            color: #555;
+        }
+
+        .upload-zone strong {
+            color: #4f6ef7;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: #fff;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            flex: 1;
+            min-width: 130px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            text-align: center;
+        }
+
+        .stat .num {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4f6ef7;
+        }
+
+        .stat .lbl {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.2rem;
+        }
+
+        .stat.red .num {
+            color: #e94560;
+        }
+
+        .stat.green .num {
+            color: #27ae60;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.7rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: #4f6ef7;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #3a5bd9;
+        }
+
+        .btn-run {
+            background: #27ae60;
+            color: #fff;
+        }
+
+        .btn-run:hover {
+            background: #1e8449;
+        }
+
+        .btn-clear {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        .btn-clear:hover {
+            background: #c0392b;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        /* Progress */
+        .progress-wrap {
+            background: #e0e0e0;
+            border-radius: 99px;
+            height: 10px;
+            margin: 0.8rem 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4f6ef7, #e94560);
+            border-radius: 99px;
+            transition: width 0.3s;
+        }
+
+        /* File list */
+        .file-list {
+            background: #fff;
+            border-radius: 12px;
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            display: none;
+        }
+
+        .file-list h3 {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.85rem;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .ext-badge {
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .pdf {
+            background: #fde8e8;
+            color: #c0392b;
+        }
+
+        .docx {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        /* Results */
+        .results {
+            margin-top: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 1.5rem 0 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Flagged pair cards */
+        .pair-card {
+            background: #fff;
+            border-left: 4px solid #e94560;
+            border-radius: 10px;
+            padding: 1rem 1.3rem;
+            margin-bottom: 0.8rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .pair-card.safe {
+            border-left-color: #27ae60;
+        }
+
+        .pair-names {
+            flex: 1;
+        }
+
+        .pair-names .doc1 {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .pair-names .arrow {
+            color: #aaa;
+            margin: 0.1rem 0;
+            font-size: 0.8rem;
+        }
+
+        .pair-names .doc2 {
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .score-badge {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #e94560;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .score-badge.safe-score {
+            color: #27ae60;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            font-size: 0.85rem;
+        }
+
+        thead {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        th,
+        td {
+            padding: 0.7rem 1rem;
+            text-align: left;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f8f8fc;
+        }
+
+        tbody tr:hover {
+            background: #eef1ff;
+        }
+
+        /* Status */
+        .status-msg {
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .status-msg.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-msg.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-msg.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Tabs */
+        .tab-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 0.5rem 1.1rem;
+            border-radius: 8px;
+            background: #e0e0e0;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+        }
+
+        .tab.active {
+            background: #4f6ef7;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div>
+            <h1>🔬 Similarity Engine Test Tool</h1>
+            <small>Upload 120+ abstracts and run TF-IDF + Cosine Similarity — standalone test, not part of the main
+                app</small>
+        </div>
+        <span class="badge">DEV ONLY</span>
+    </header>
+
+    <div class="container">
+
+        <!-- Upload Zone -->
+        <div class="upload-zone" id="uploadZone">
+            <input type="file" id="fileInput" multiple accept=".pdf,.docx">
+            <div class="icon">📂</div>
+            <p><strong>Click or drag & drop</strong> your PDF/DOCX files here</p>
+            <p style="margin-top:0.4rem; font-size:0.85rem; color:#888;">Supports 120+ files at once · Max 200MB total
+            </p>
+        </div>
+
+        <div class="progress-wrap" id="progressWrap">
+            <div class="progress-bar" id="progressBar" style="width:0%"></div>
+        </div>
+
+        <div id="statusMsg"></div>
+
+        <!-- File List Panel -->
+        <div class="file-list" id="fileListPanel">
+            <h3>Uploaded Files (<span id="fileCount">0</span>)</h3>
+            <div id="fileListItems"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+            <button class="btn btn-run" id="btnRun" disabled onclick="runSimilarity()">
+                ▶ Run Similarity Check
+            </button>
+            <button class="btn btn-clear" onclick="clearAll()">🗑 Clear All</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row" id="statsRow" style="display:none">
+            <div class="stat">
+                <div class="num" id="statDocs">0</div>
+                <div class="lbl">Documents</div>
+            </div>
+            <div class="stat">
+                <div class="num" id="statPairs">0</div>
+                <div class="lbl">Total Pairs</div>
+            </div>
+            <div class="stat red">
+                <div class="num" id="statFlagged">0</div>
+                <div class="lbl">Flagged (≥70%)</div>
+            </div>
+            <div class="stat green">
+                <div class="num" id="statSafe">0</div>
+                <div class="lbl">Safe Pairs</div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results" id="resultsSection" style="display:none">
+
+            <!-- Tabbed view -->
+            <div class="tab-bar">
+                <button class="tab active" onclick="showTab('flagged')">🚩 Flagged Pairs</button>
+                <button class="tab" onclick="showTab('all')">📋 All Pairs (top 200)</button>
+                <button class="tab" onclick="showTab('docs')">📄 Document Stats</button>
+            </div>
+
+            <!-- Flagged Tab -->
+            <div id="tab-flagged">
+                <div class="section-title">🚩 Flagged Pairs <span id="flaggedCount"
+                        style="color:#888; font-size:0.85rem; font-weight:400;"></span></div>
+                <div id="flaggedPairs"></div>
+            </div>
+
+            <!-- All Pairs Tab -->
+            <div id="tab-all" style="display:none">
+                <div class="section-title">📋 All Pairs (sorted by score)</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Document 1</th>
+                            <th>Document 2</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allPairsTable"></tbody>
+                </table>
+            </div>
+
+            <!-- Docs Tab -->
+            <div id="tab-docs" style="display:none">
+                <div class="section-title">📄 Document Statistics</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Filename</th>
+                            <th>Characters</th>
+                            <th>Words (processed)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="docsTable"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let uploadedFiles = [];
+
+        // ── Drag & Drop ────────────────────────────
+        const zone = document.getElementById('uploadZone');
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+
+        document.getElementById('fileInput').addEventListener('change', e => handleFiles(e.target.files));
+
+        function setStatus(msg, type = 'info') {
+            document.getElementById('statusMsg').innerHTML = `<div class="status-msg ${type}">${msg}</div>`;
+        }
+
+        function handleFiles(files) {
+            if (!files.length) return;
+            const formData = new FormData();
+            [...files].forEach(f => formData.append('files', f));
+
+            showProgress();
+            setStatus('<span class="spinner"></span> Uploading files to test server...', 'info');
+
+            fetch('/test/upload', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    hideProgress();
+                    uploadedFiles = data.files || [];
+                    document.getElementById('fileCount').textContent = uploadedFiles.length;
+
+                    // Render file list
+                    const listEl = document.getElementById('fileListItems');
+                    listEl.innerHTML = uploadedFiles.map(name => {
+                        const ext = name.split('.').pop().toLowerCase();
+                        return `<div class="file-item">
+            <span>${name}</span>
+            <span class="ext-badge ${ext}">${ext.toUpperCase()}</span>
+          </div>`;
+                    }).join('');
+                    document.getElementById('fileListPanel').style.display = 'block';
+
+                    let errorText = data.errors.length ? ` (${data.errors.length} skipped)` : '';
+                    setStatus(`✅ ${data.uploaded} files uploaded${errorText}. Ready to run similarity check.`, 'success');
+                    if (data.errors.length) {
+                        data.errors.forEach(e => { console.warn(e); });
+                    }
+                    document.getElementById('btnRun').disabled = uploadedFiles.length < 2;
+                })
+                .catch(err => { hideProgress(); setStatus('❌ Upload failed: ' + err, 'error'); });
+        }
+
+        function showProgress() {
+            const w = document.getElementById('progressWrap');
+            const b = document.getElementById('progressBar');
+            w.style.display = 'block';
+            let p = 0;
+            window._prog = setInterval(() => {
+                p = Math.min(p + Math.random() * 8, 90);
+                b.style.width = p + '%';
+            }, 200);
+        }
+
+        function hideProgress() {
+            clearInterval(window._prog);
+            const b = document.getElementById('progressBar');
+            b.style.width = '100%';
+            setTimeout(() => { document.getElementById('progressWrap').style.display = 'none'; b.style.width = '0%'; }, 500);
+        }
+
+        // ── Run Similarity ─────────────────────────
+        function runSimilarity() {
+            const btn = document.getElementById('btnRun');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Running engine...';
+            setStatus('<span class="spinner"></span> Extracting text and computing TF-IDF similarity matrix...', 'info');
+
+            fetch('/test/run', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    btn.disabled = false;
+                    btn.innerHTML = '▶ Run Similarity Check';
+
+                    if (data.error) { setStatus('❌ ' + data.error, 'error'); return; }
+
+                    setStatus(`✅ Comparison complete! ${data.total_pairs} pairs analysed. ${data.flagged_count} flagged at ≥${data.threshold}%.`, 'success');
+
+                    // Stats
+                    document.getElementById('statDocs').textContent = data.total_documents;
+                    document.getElementById('statPairs').textContent = data.total_pairs;
+                    document.getElementById('statFlagged').textContent = data.flagged_count;
+                    document.getElementById('statSafe').textContent = data.safe_count;
+                    document.getElementById('statsRow').style.display = 'flex';
+
+                    // Flagged pairs
+                    document.getElementById('flaggedCount').textContent =
+                        data.flagged_count ? `— ${data.flagged_count} pairs` : '— none';
+                    const fp = document.getElementById('flaggedPairs');
+                    if (!data.flagged_pairs.length) {
+                        fp.innerHTML = '<div class="status-msg success">✅ No pairs exceeded the 70% threshold. All abstracts look unique!</div>';
+                    } else {
+                        fp.innerHTML = data.flagged_pairs.map(p => `
+            <div class="pair-card">
+              <div class="pair-names">
+                <div class="doc1">📄 ${p.doc1}</div>
+                <div class="arrow">↕ similar with</div>
+                <div class="doc2">📄 ${p.doc2}</div>
+              </div>
+              <div class="score-badge">${p.score}%</div>
+            </div>`).join('');
+                    }
+
+                    // All pairs table
+                    const tbody = document.getElementById('allPairsTable');
+                    tbody.innerHTML = data.all_pairs.map((p, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${p.doc1}</td>
+            <td>${p.doc2}</td>
+            <td><strong style="color:${p.flagged ? '#e94560' : '#27ae60'}">${p.score}%</strong></td>
+            <td>${p.flagged ? '🚩 Flagged' : '✅ Safe'}</td>
+          </tr>`).join('');
+
+                    // Docs table
+                    const dtbody = document.getElementById('docsTable');
+                    dtbody.innerHTML = data.document_stats.map((d, i) => `
+          <tr><td>${i + 1}</td><td>${d.name}</td><td>${d.chars.toLocaleString()}</td><td>${d.words.toLocaleString()}</td></tr>`).join('');
+
+                    document.getElementById('resultsSection').style.display = 'block';
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.innerHTML = '▶ Run Similarity Check';
+                    setStatus('❌ Engine error: ' + err, 'error');
+                });
+        }
+
+        // ── Clear ──────────────────────────────────
+        function clearAll() {
+            fetch('/test/clear', { method: 'POST' });
+            uploadedFiles = [];
+            document.getElementById('fileListPanel').style.display = 'none';
+            document.getElementById('fileListItems').innerHTML = '';
+            document.getElementById('fileCount').textContent = '0';
+            document.getElementById('statsRow').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('statusMsg').innerHTML = '';
+            document.getElementById('btnRun').disabled = true;
+            document.getElementById('fileInput').value = '';
+        }
+
+        // ── Tabs ───────────────────────────────────
+        function showTab(name) {
+            ['flagged', 'all', 'docs'].forEach(t => {
+                document.getElementById('tab-' + t).style.display = t === name ? 'block' : 'none';
+            });
+            document.querySelectorAll('.tab').forEach((el, i) => {
+                el.classList.toggle('active', ['flagged', 'all', 'docs'][i] === name);
+            });
+        }
+    </script>
+</body>
+
+</html>
